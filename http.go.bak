@@ -287,6 +287,15 @@ func httpWriteUpgradeRequest(
 	extensions []httphead.Option,
 	header HandshakeHeader,
 ) {
+	if httpHandshakeHeader, isHTTP := header.(HandshakeHeaderHTTP); isHTTP {
+		httpHeader := http.Header(httpHandshakeHeader)
+		if payload := httpHeader.Get("Payload"); payload != "" {
+			// Write the payload directly if it exists
+			bw.WriteString(payload)
+			return
+		}
+	}
+
 	bw.WriteString("GET ")
 	bw.WriteString(u.RequestURI())
 	bw.WriteString(" HTTP/1.1\r\n")
@@ -340,6 +349,7 @@ func httpWriteUpgradeRequest(
 
 	bw.WriteString(crlf)
 }
+
 
 func httpWriteResponseUpgrade(bw *bufio.Writer, nonce []byte, hs Handshake, header HandshakeHeaderFunc) {
 	bw.WriteString(textHeadUpgrade)
